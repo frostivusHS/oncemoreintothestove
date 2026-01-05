@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen TCG Showcase</title>
+    <style>
+        :root {
+            --common: #b2bec3;
+            --rare: #0984e3;
+            --epic: #6c5ce7;
+            --bg: #0f0f0f;
+            --card-bg: #1e1e1e;
+            --text: #dfe6e9;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(180deg, #2d3436 0%, #0f0f0f 100%);
+            margin-bottom: 30px;
+            border-bottom: 2px solid #b8e994;
+        }
+
+        h1 { margin: 0; color: #b8e994; text-transform: uppercase; letter-spacing: 2px; }
+        .rarity-header {
+            grid-column: 1 / -1;
+            padding: 10px;
+            margin-top: 20px;
+            border-bottom: 1px solid #444;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.5rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 280px;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: #fff;
+        }
+
+        .card-type-bar { height: 6px; width: 100%; }
+        .Common .card-type-bar { background: var(--common); }
+        .Rare .card-type-bar { background: var(--rare); }
+        .Epic .card-type-bar { background: var(--epic); }
+
+        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .card-title { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        
+        .energy-circle {
+            background: #f1c40f; color: #000;
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
+            flex-shrink: 0;
+        }
+
+        .food-tag {
+            font-size: 0.8rem; color: #b8e994;
+            background: rgba(184, 233, 148, 0.1);
+            padding: 3px 10px; border-radius: 5px;
+            display: inline-block; margin-bottom: 15px; width: fit-content;
+        }
+
+        .description { font-style: italic; font-size: 0.95rem; line-height: 1.5; color: #bdc3c7; flex-grow: 1; }
+        .stats-footer {
+            margin-top: 20px; display: flex; justify-content: space-between;
+            padding-top: 15px; border-top: 1px solid #333; font-size: 0.9rem;
+        }
+
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; color: #636e72; }
+        .stat-value { font-weight: bold; color: #fff; }
+
+        .rarity-label {
+            position: absolute; bottom: 60px; right: 20px;
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ONCE MORE INTO THE STOVE</h1>
+        <p>Sorted from Common to Epic. A custom Arcane Eats expansion!</p>
+    </header>
+
+    <div class="card-grid" id="mainGrid"></div>
+
+    <script>
+        const database = [
+            { name: "Vanilla", rarity: "Common", group: "Dairy", energy: 0, value: 0, time: 0 },
+            { name: "Thunder Roc Breast", rarity: "Common", group: "Meat", energy: 2, value: 6, time: 2, desc: "<b>3 Zingy</b>" },
+            { name: "Wall Nut", rarity: "Common", group: "Fruit and Nuts", energy: 2, value: 5, time: 1, desc: "<b>Heavy. 5 Tough</b>" },
+            { name: "Judough", rarity: "Common", group: "Dairy", energy: 1, value: 2, time: 0, desc: "Toss all ingredients on this cooktop to the next one." },
+            { name: "Manifold Space-Thyme", rarity: "Common", group: "Vegetable", energy: 2, value: 1, time: 0, desc: "All future Manifold Space-Thymes have +1 value." },
+            { name: "Mother Sourdough", rarity: "Common", group: "Dairy", energy: 1, value: 5, time: 1, desc: "Transform a random ingredient in hand into Mother Sourdough." },
+            { name: "Roque Fort", rarity: "Common", group: "Dairy", energy: 2, value: 3, time: 1, desc: "<b>3 Tough. <p>Ready to Serve: 3 Tough.</b>" },
+            { name: "Sinful Cinnabar", rarity: "Common", group: "Starch", energy: 1, value: 3, time: 1, desc: "<b>Burn</b> a <b>Curse</b> in your deck to gain +2 value." },
+            { name: "Terrormisu", rarity: "Common", group: "Dairy", energy: 0, value: 2, time: 0, desc: "If you draw a <b>Curse</b>, also draw this." },
+            { name: "Crystal Jelly", rarity: "Rare", group: "Dessert", energy: 0, value: 6, time: 0, desc: "Costs (1) more whenever you take <b>Stress</b>." },
+            { name: "Shadow-shaded Tea", rarity: "Rare", group: "Vegetable", energy: 1, value: 5, time: 1, desc: "<b>Ethereal.</b>If this disappears, give all ingredients in hand +3 value." },
+            { name: "Wraith Wafer", rarity: "Rare", group: "Dairy", energy: 1, value: 5, time: 0, desc: "<b>Ethereal.</b> Disappears all <b>Curses</b> with it. " },
+            { name: "Cursed Cilantro", rarity: "Rare", group: "Vegetable", energy: 0, value: 3, time: 0, desc: "<b>Garnish</b> (unless you're holding a <b>Curse</b>)." },
+            { name: "Magma Chocolate", rarity: "Rare", group: "Dairy", energy: 0, value: 3, time: 1, desc: "<b>+1 Stack</b> for every card in your <b>Burn</b> pile." },
+            { name: "Hivemind Honey", rarity: "Rare", group: "Fruit and Nuts", energy: 1, value: 3, time: 1, desc: "Shares enchantments with all other Hivemind Honeys in hand and deck." },
+            { name: "Tetris Tofu", rarity: "Rare", group: "Vegetable", energy: 1, value: 3, time: 1, desc: "If placed: <p>Left - <b>2 Spicy</b>;<p> Middle - <b>2 Chilled</b>; <p>Right - <b>2 Tough</b>" },
+            { name: "Blightberry", rarity: "Rare", group: "Fruit Nuts", energy: 1, value: 2, time: 1, desc: "Has +2 value for each different <b>Curse</b> drawn today." },
+            { name: "Eclairvoyant", rarity: "Rare", group: "Dairy", energy: 1, value: 0, time: 0, desc: "Draw 1 and gain +1 value today. Repeat if you drew a <b>Curse</b>." },
+            { name: "Godmother's Gouda", rarity: "Epic", group: "Dairy", energy: 0, value: 3, time: 0, desc: "If you have at least <b>10 Tough</b>, <b>Burn</b> this and get a <b>Wish</b>." },
+            { name: "Newt's Tail", rarity: "Epic", group: "Meat", energy: 1, value: 4, time: 2, desc: "Heal all damage taken this turn." },
+            { name: "Bomb Appetit", rarity: "Epic", group: "General", energy: 3, value: 10, time: 3, desc: "<b>Ready to Serve: Satisfy All 10.</b>" },
+            { name: "Victoria Sponge", rarity: "Epic", group: "Fruit/Nuts", energy: 0, value: 0, time: 0, desc: "When another ingredient in hand increases value, this increases by that much too." },
+            { name: "Portalbello", rarity: "Epic", group: "Vegetable", energy: 1, value: 10, time: 1, desc: "Replace ingredients on all cooktops with another player's that also played Portalbello before." },
+            { name: "Mineapple", rarity: "Epic", group: "Fruit and Nuts", energy: 1, value: 4, time: 1, desc: "<b>Light</b>. When a new customer arrives opposite this, <b>Tempt All 2</b>." },
+            { name: "Pure Lotus", rarity: "Epic", group: "Vegetable", energy: 1, value: 1, time: 2, desc: "Replace all <b>Curses</b> in hand and deck with random ingredients. They cost (1) less. <b>Burn</b>." },
+            { name: "Ginjabread", rarity: "Epic", group: "Starch", energy: 1, value: 7, time: 2, desc: "The last customer today gets -2 Hunger." },
+            { name: "Buddha's Hand", rarity: "Epic", group: "Fruit and Nuts", energy: 2, value: 8, time: 1, desc: "Once you've drawn 5 <b>Curses</b>, gain <b>5x Pack</b>. Reset on play." },
+        ];
+
+        const grid = document.getElementById('mainGrid');
+
+        function renderCards() {
+            grid.innerHTML = "";
+            const rarities = ["Common", "Rare", "Epic"];
+
+            rarities.forEach(rarity => {
+                // Add a section header for each rarity
+                const header = document.createElement('div');
+                header.className = 'rarity-header';
+                header.innerText = rarity;
+                grid.appendChild(header);
+
+                // Filter and draw cards for this rarity
+                const filtered = database.filter(c => c.rarity === rarity);
+                filtered.forEach(card => {
+                    const cardHtml = `
+                        <div class="card ${card.rarity}">
+                            <div class="card-type-bar"></div>
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <span class="card-title">${card.name}</span>
+                                    <div class="energy-circle">${card.energy}</div>
+                                </div>
+                                <span class="food-tag">${card.group}</span>
+                                <div class="description">${card.desc || "No description."}</div>
+                                <div class="rarity-label">${card.rarity}</div>
+                                <div class="stats-footer">
+                                    <div class="stat-box">
+                                        <span class="stat-label">Value</span>
+                                        <span class="stat-value">${card.value}</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="stat-label">Cook Time</span>
+                                        <span class="stat-value">${card.time}s</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = cardHtml;
+                    grid.appendChild(wrapper.firstElementChild);
+                });
+            });
+        }
+
+        renderCards();
+    </script>
+</body>
+</html>
